@@ -10,7 +10,7 @@
 #include <string>
 #include <vector>
 
-#define BURST_SIZE 512
+#define BURST_SIZE 1024
 #define PAYLOAD_SIZE 1472
 
 using namespace std;
@@ -27,9 +27,13 @@ int thread(void* arg);
 int main(int argc, char* argv[]) {
   // Получаем число ядер в системе
   string core_mask = "0-" + to_string(sysconf(_SC_NPROCESSORS_CONF) - 1);
-  vector<const char*> eal_config = {"main", "-l", core_mask.c_str(),
-                                    "--vdev=net_tap1,iface=dpdk-1",
-                                    "--vdev=net_tap2,iface=dpdk-2"};
+  // vector<const char*> eal_config = {"main", "-l", core_mask.c_str(),
+  //                                   "--vdev=net_tap1,iface=dpdk-1",
+  //                                   "--vdev=net_tap2,iface=dpdk-2"};
+
+  vector<const char*> eal_config = {
+      "main",         "-l", core_mask.c_str(), "-a",
+      "0000:01:00.0"};
 
   // cout << "Payload size: " << argv[1] << endl;
   cout << "Core mask: " << core_mask << endl;
@@ -59,37 +63,57 @@ int main(int argc, char* argv[]) {
     //  Пул хранения пакетов на приём
     string rx_pool_name = "rx_pool#" + to_string(port_id);
     rx_pool[port_id] = rte_pktmbuf_pool_create(
-        rx_pool_name.c_str(), port_info[port_id].rx_desc_lim.nb_max, 512, 0,
+        rx_pool_name.c_str(), port_info[port_id].rx_desc_lim.nb_max * 2, 512, 0,
         RTE_MBUF_DEFAULT_DATAROOM + RTE_PKTMBUF_HEADROOM,
         rte_eth_dev_socket_id(port_id));
 
     // Пул хранения пакетов на отправку
     string tx_pool_name = "tx_pool#" + to_string(port_id);
     tx_pool[port_id] = rte_pktmbuf_pool_create(
-        tx_pool_name.c_str(), port_info[port_id].tx_desc_lim.nb_max, 512, 0,
+        tx_pool_name.c_str(), port_info[port_id].tx_desc_lim.nb_max * 2, 512, 0,
         RTE_MBUF_DEFAULT_DATAROOM + RTE_PKTMBUF_HEADROOM,
         rte_eth_dev_socket_id(port_id));
 
     port_conf[port_id] = {};  // Очищаем конфигурацию порта
 
     // RX
-    port_conf[port_id].rxmode.offloads |= RTE_ETH_RX_OFFLOAD_IPV4_CKSUM;
-    port_conf[port_id].rxmode.offloads |= RTE_ETH_RX_OFFLOAD_UDP_CKSUM;
-    port_conf[port_id].rxmode.offloads |= RTE_ETH_RX_OFFLOAD_TCP_CKSUM;
-    // TX
-    port_conf[port_id].txmode.offloads |= RTE_ETH_TX_OFFLOAD_IPV4_CKSUM;
-    port_conf[port_id].txmode.offloads |= RTE_ETH_TX_OFFLOAD_UDP_CKSUM;
-    port_conf[port_id].txmode.offloads |= RTE_ETH_TX_OFFLOAD_TCP_CKSUM;
+    if (port_info[port_id].rx_offload_capa & RTE_ETH_RX_OFFLOAD_IPV4_CKSUM) {
+      cout << "Есть поддержка RTE_ETH_RX_OFFLOAD_IPV4_CKSUM" << endl;
+      port_conf[port_id].rxmode.offloads |= RTE_ETH_RX_OFFLOAD_IPV4_CKSUM;
+    }
 
-    if (rte_eth_dev_configure(port_id, port_info[port_id].max_rx_queues,
-                              port_info[port_id].max_tx_queues,
-                              &port_conf[port_id]) < 0)
-      rte_exit(rte_errno,
-               "Ошибка конфигурирования интерфейса: %s\n", rte_strerror(rte_errno));
+    if (port_info[port_id].rx_offload_capa & RTE_ETH_RX_OFFLOAD_UDP_CKSUM) {
+      cout << "Есть поддержка RTE_ETH_RX_OFFLOAD_UDP_CKSUM" << endl;
+      port_conf[port_id].rxmode.offloads |= RTE_ETH_RX_OFFLOAD_UDP_CKSUM;
+    }
+
+    if (port_info[port_id].rx_offload_capa & RTE_ETH_RX_OFFLOAD_TCP_CKSUM) {
+      cout << "Есть поддержка RTE_ETH_RX_OFFLOAD_TCP_CKSUM" << endl;
+      port_conf[port_id].rxmode.offloads |= RTE_ETH_RX_OFFLOAD_TCP_CKSUM;
+    }
+
+    // TX
+    if (port_info[port_id].tx_offload_capa & RTE_ETH_TX_OFFLOAD_IPV4_CKSUM) {
+      cout << "Есть поддержка RTE_ETH_TX_OFFLOAD_IPV4_CKSUM" << endl;
+      port_conf[port_id].txmode.offloads |= RTE_ETH_TX_OFFLOAD_IPV4_CKSUM;
+    }
+
+    if (port_info[port_id].tx_offload_capa & RTE_ETH_TX_OFFLOAD_UDP_CKSUM) {
+      cout << "Есть поддержка RTE_ETH_TX_OFFLOAD_UDP_CKSUM" << endl;
+      port_conf[port_id].txmode.offloads |= RTE_ETH_TX_OFFLOAD_UDP_CKSUM;
+    }
+
+    if (port_info[port_id].tx_offload_capa & RTE_ETH_TX_OFFLOAD_TCP_CKSUM) {
+      cout << "Есть поддержка RTE_ETH_TX_OFFLOAD_TCP_CKSUM" << endl;
+      port_conf[port_id].txmode.offloads |= RTE_ETH_TX_OFFLOAD_TCP_CKSUM;
+    }
+
+    if (rte_eth_dev_configure(port_id, 1, 1, &port_conf[port_id]) < 0)
+      rte_exit(rte_errno, "Ошибка конфигурирования интерфейса: %s\n",
+               rte_strerror(rte_errno));
 
     //  RX
-    for (int rx_queue = 0; rx_queue < port_info[port_id].max_rx_queues;
-         rx_queue++) {
+    for (int rx_queue = 0; rx_queue < 1; rx_queue++) {
       int rx_queue_cr = rte_eth_rx_queue_setup(
           port_id, rx_queue, port_info[port_id].rx_desc_lim.nb_max,
           rte_eth_dev_socket_id(port_id), NULL, rx_pool[port_id]);
@@ -98,8 +122,7 @@ int main(int argc, char* argv[]) {
                  rte_strerror(rte_errno));
     }
     // TX
-    for (int tx_queue = 0; tx_queue < port_info[port_id].max_tx_queues;
-         tx_queue++) {
+    for (int tx_queue = 0; tx_queue < 1; tx_queue++) {
       int tx_queue_cr = rte_eth_tx_queue_setup(
           port_id, tx_queue, port_info[port_id].tx_desc_lim.nb_max,
           rte_eth_dev_socket_id(port_id), NULL);
@@ -198,7 +221,8 @@ int main(int argc, char* argv[]) {
     config[port_id].pool = tx_pool[port_id];
 
     if (rte_eal_remote_launch(thread, &config[port_id], 1 + port_id) != 0)
-      rte_exit(rte_errno, "Ошибка запуска потока: %s\n", rte_strerror(rte_errno));
+      rte_exit(rte_errno, "Ошибка запуска потока: %s\n",
+               rte_strerror(rte_errno));
   }
 
   while (true) {
