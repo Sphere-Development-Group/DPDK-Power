@@ -233,18 +233,18 @@ int main(int argc, char* argv[]) {
     cout << "Command: ";
     cin >> cli_command;
     if (cli_command == "stat") {
-      uint64_t opackets = 0;  // Число отправленных пакетов
-      uint64_t ipackets = 0;  // Число принятых пакетов
+      uint64_t opackets[number_interfaces];  // Число отправленных пакетов
+      uint64_t ipackets[number_interfaces];  // Число принятых пакетов
       double tx_mbps;
       double rx_mbps;
 
       for (uint port_id = 0; port_id < number_interfaces; port_id++) {
         for (uint surv_stat = 0; surv_stat < 2; surv_stat++) {
           rte_eth_stats_get(port_id, &port_stats[port_id]);
-          opackets = port_stats[port_id].opackets - opackets;
-          tx_mbps = ((PAYLOAD_SIZE + 28) * 8) * opackets / (1024 * 1024);
-          rx_mbps = ((PAYLOAD_SIZE + 28) * 8) * ipackets / (1024 * 1024);
-          ipackets = port_stats[port_id].ipackets - ipackets;
+          opackets[port_id] = port_stats[port_id].opackets - opackets[port_id];
+          tx_mbps = ((PAYLOAD_SIZE + 28) * 8) * opackets[port_id] / (1024 * 1024);
+          rx_mbps = ((PAYLOAD_SIZE + 28) * 8) * ipackets[port_id] / (1024 * 1024);
+          ipackets[port_id] = port_stats[port_id].ipackets - ipackets[port_id];
           rte_delay_ms(1000);
         }
 
@@ -255,8 +255,6 @@ int main(int argc, char* argv[]) {
         cout << "\nRX PPS: " << ipackets << endl;
         cout << "RX MBS: " << rx_mbps << endl;
         cout << "==========================================" << endl;
-        opackets = 0;
-        ipackets = 0;
       }
     }
     if (cli_command == "start")
