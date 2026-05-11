@@ -118,7 +118,7 @@ int main(int argc, char* argv[]) {
     for (int rx_queue = 0; rx_queue < port_info[port_id].max_rx_queues;
          rx_queue++) {
       int rx_queue_cr = rte_eth_rx_queue_setup(
-          port_id, rx_queue, port_info[port_id].rx_desc_lim.nb_max,
+          port_id, rx_queue, 1,
           rte_eth_dev_socket_id(port_id), NULL, rx_pool[port_id]);
       if (rx_queue_cr != 0)
         rte_exit(rte_errno, "Ошибка настройки RX очереди: %s\n",
@@ -128,7 +128,7 @@ int main(int argc, char* argv[]) {
     for (int tx_queue = 0; tx_queue < port_info[port_id].max_tx_queues;
          tx_queue++) {
       int tx_queue_cr = rte_eth_tx_queue_setup(
-          port_id, tx_queue, port_info[port_id].tx_desc_lim.nb_max,
+          port_id, tx_queue, 1,
           rte_eth_dev_socket_id(port_id), NULL);
       if (tx_queue_cr != 0)
         rte_exit(rte_errno, "Ошибка настройки TX очереди: %s\n",
