@@ -10,7 +10,7 @@
 #include <string>
 #include <vector>
 
-#define BURST_SIZE 512
+#define BURST_SIZE 32
 #define PAYLOAD_SIZE 36
 
 using namespace std;
@@ -242,8 +242,8 @@ int main(int argc, char* argv[]) {
         for (uint surv_stat = 0; surv_stat < 2; surv_stat++) {
           rte_eth_stats_get(port_id, &port_stats[port_id]);
           opackets = port_stats[port_id].opackets - opackets;
-          tx_mbps = (PAYLOAD_SIZE * 8) * opackets / (1024 * 1024);
-          rx_mbps = (PAYLOAD_SIZE * 8) * ipackets / (1024 * 1024);
+          tx_mbps = ((PAYLOAD_SIZE + 28) * 8) * opackets / (1024 * 1024);
+          rx_mbps = ((PAYLOAD_SIZE + 28) * 8) * ipackets / (1024 * 1024);
           ipackets = port_stats[port_id].ipackets - ipackets;
           rte_delay_ms(1000);
         }
