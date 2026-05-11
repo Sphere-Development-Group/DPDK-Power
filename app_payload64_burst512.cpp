@@ -235,6 +235,12 @@ int main(int argc, char* argv[]) {
     if (cli_command == "stat") {
       uint64_t opackets[number_interfaces];  // Число отправленных пакетов
       uint64_t ipackets[number_interfaces];  // Число принятых пакетов
+
+      for (int i = 0; i < number_interfaces; i++) {
+        opackets[i] = 0;
+        ipackets[i] = 0;
+      }
+
       double tx_mbps;
       double rx_mbps;
 
@@ -242,8 +248,10 @@ int main(int argc, char* argv[]) {
         for (uint surv_stat = 0; surv_stat < 2; surv_stat++) {
           rte_eth_stats_get(port_id, &port_stats[port_id]);
           opackets[port_id] = port_stats[port_id].opackets - opackets[port_id];
-          tx_mbps = ((PAYLOAD_SIZE + 28) * 8) * opackets[port_id] / (1024 * 1024);
-          rx_mbps = ((PAYLOAD_SIZE + 28) * 8) * ipackets[port_id] / (1024 * 1024);
+          tx_mbps =
+              ((PAYLOAD_SIZE + 28) * 8) * opackets[port_id] / (1024 * 1024);
+          rx_mbps =
+              ((PAYLOAD_SIZE + 28) * 8) * ipackets[port_id] / (1024 * 1024);
           ipackets[port_id] = port_stats[port_id].ipackets - ipackets[port_id];
           rte_delay_ms(1000);
         }
