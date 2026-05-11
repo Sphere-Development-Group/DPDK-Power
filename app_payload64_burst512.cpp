@@ -108,8 +108,8 @@ int main(int argc, char* argv[]) {
       port_conf[port_id].txmode.offloads |= RTE_ETH_TX_OFFLOAD_TCP_CKSUM;
     }
 
-    if (rte_eth_dev_configure(port_id, port_info[port_id].max_rx_queues,
-                              port_info[port_id].max_tx_queues,
+    if (rte_eth_dev_configure(port_id, 0,
+                              0,
                               &port_conf[port_id]) < 0)
       rte_exit(rte_errno, "Ошибка конфигурирования интерфейса: %s\n",
                rte_strerror(rte_errno));
