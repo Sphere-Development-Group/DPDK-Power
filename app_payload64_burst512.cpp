@@ -115,7 +115,7 @@ int main(int argc, char* argv[]) {
                rte_strerror(rte_errno));
 
     //  RX
-    for (int rx_queue = 0; rx_queue < port_info[port_id].max_rx_queues;
+    for (int rx_queue = 0; rx_queue < 1;
          rx_queue++) {
       int rx_queue_cr = rte_eth_rx_queue_setup(
           port_id, rx_queue, 1,
@@ -125,7 +125,7 @@ int main(int argc, char* argv[]) {
                  rte_strerror(rte_errno));
     }
     // TX
-    for (int tx_queue = 0; tx_queue < port_info[port_id].max_tx_queues;
+    for (int tx_queue = 0; tx_queue < 1;
          tx_queue++) {
       int tx_queue_cr = rte_eth_tx_queue_setup(
           port_id, tx_queue, 1,
