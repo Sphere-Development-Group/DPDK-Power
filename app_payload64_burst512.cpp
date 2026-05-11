@@ -77,33 +77,33 @@ int main(int argc, char* argv[]) {
     port_conf[port_id] = {};  // Очищаем конфигурацию порта
 
     // RX
-    if (port_info->rx_offload_capa & RTE_ETH_RX_OFFLOAD_IPV4_CKSUM) {
+    if (port_info[port_id].rx_offload_capa & RTE_ETH_RX_OFFLOAD_IPV4_CKSUM) {
       cout << "Есть поддержка RTE_ETH_RX_OFFLOAD_IPV4_CKSUM" << endl;
       port_conf[port_id].rxmode.offloads |= RTE_ETH_RX_OFFLOAD_IPV4_CKSUM;
     }
 
-    if (port_info->rx_offload_capa & RTE_ETH_RX_OFFLOAD_UDP_CKSUM) {
+    if (port_info[port_id].rx_offload_capa & RTE_ETH_RX_OFFLOAD_UDP_CKSUM) {
       cout << "Есть поддержка RTE_ETH_RX_OFFLOAD_UDP_CKSUM" << endl;
       port_conf[port_id].rxmode.offloads |= RTE_ETH_RX_OFFLOAD_UDP_CKSUM;
     }
 
-    if (port_info->rx_offload_capa & RTE_ETH_RX_OFFLOAD_TCP_CKSUM) {
+    if (port_info[port_id].rx_offload_capa & RTE_ETH_RX_OFFLOAD_TCP_CKSUM) {
       cout << "Есть поддержка RTE_ETH_RX_OFFLOAD_TCP_CKSUM" << endl;
       port_conf[port_id].rxmode.offloads |= RTE_ETH_RX_OFFLOAD_TCP_CKSUM;
     }
 
     // TX
-    if (port_info->tx_offload_capa & RTE_ETH_TX_OFFLOAD_IPV4_CKSUM) {
+    if (port_info[port_id].tx_offload_capa & RTE_ETH_TX_OFFLOAD_IPV4_CKSUM) {
       cout << "Есть поддержка RTE_ETH_TX_OFFLOAD_IPV4_CKSUM" << endl;
       port_conf[port_id].txmode.offloads |= RTE_ETH_TX_OFFLOAD_IPV4_CKSUM;
     }
 
-    if (port_info->tx_offload_capa & RTE_ETH_TX_OFFLOAD_UDP_CKSUM) {
+    if (port_info[port_id].tx_offload_capa & RTE_ETH_TX_OFFLOAD_UDP_CKSUM) {
       cout << "Есть поддержка RTE_ETH_TX_OFFLOAD_UDP_CKSUM" << endl;
       port_conf[port_id].txmode.offloads |= RTE_ETH_TX_OFFLOAD_UDP_CKSUM;
     }
 
-    if (port_info->tx_offload_capa & RTE_ETH_TX_OFFLOAD_TCP_CKSUM) {
+    if (port_info[port_id].tx_offload_capa & RTE_ETH_TX_OFFLOAD_TCP_CKSUM) {
       cout << "Есть поддержка RTE_ETH_TX_OFFLOAD_TCP_CKSUM" << endl;
       port_conf[port_id].txmode.offloads |= RTE_ETH_TX_OFFLOAD_TCP_CKSUM;
     }
