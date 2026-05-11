@@ -32,8 +32,8 @@ int main(int argc, char* argv[]) {
   //                                   "--vdev=net_tap2,iface=dpdk-2"};
 
   vector<const char*> eal_config = {
-      "main",         "-l", core_mask.c_str(), "-a",
-      "0000:01:00.0", "-a", "0000:01:00.1"};
+      "main",         "-l", core_mask.c_str(),   "-a", "0000:01:00.0", "-a",
+      "0000:01:00.1", "-d", "librte_net_mlx5.so"};
 
   // cout << "Payload size: " << argv[1] << endl;
   cout << "Core mask: " << core_mask << endl;
