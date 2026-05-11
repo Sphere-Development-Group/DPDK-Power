@@ -27,9 +27,13 @@ int thread(void* arg);
 int main(int argc, char* argv[]) {
   // Получаем число ядер в системе
   string core_mask = "0-" + to_string(sysconf(_SC_NPROCESSORS_CONF) - 1);
-  vector<const char*> eal_config = {"main", "-l", core_mask.c_str(),
-                                    "--vdev=net_tap1,iface=dpdk-1",
-                                    "--vdev=net_tap2,iface=dpdk-2"};
+  // vector<const char*> eal_config = {"main", "-l", core_mask.c_str(),
+  //                                   "--vdev=net_tap1,iface=dpdk-1",
+  //                                   "--vdev=net_tap2,iface=dpdk-2"};
+
+  vector<const char*> eal_config = {
+      "main",         "-l", core_mask.c_str(), "-а",
+      "0000:01:00.0", "-a", "0000:01:00.1"};
 
   // cout << "Payload size: " << argv[1] << endl;
   cout << "Core mask: " << core_mask << endl;
@@ -73,19 +77,42 @@ int main(int argc, char* argv[]) {
     port_conf[port_id] = {};  // Очищаем конфигурацию порта
 
     // RX
-    port_conf[port_id].rxmode.offloads |= RTE_ETH_RX_OFFLOAD_IPV4_CKSUM;
-    port_conf[port_id].rxmode.offloads |= RTE_ETH_RX_OFFLOAD_UDP_CKSUM;
-    port_conf[port_id].rxmode.offloads |= RTE_ETH_RX_OFFLOAD_TCP_CKSUM;
+    if (port_info->rx_offload_capa & RTE_ETH_RX_OFFLOAD_IPV4_CKSUM) {
+      cout << "Есть поддержка RTE_ETH_RX_OFFLOAD_IPV4_CKSUM" << endl;
+      port_conf[port_id].rxmode.offloads |= RTE_ETH_RX_OFFLOAD_IPV4_CKSUM;
+    }
+
+    if (port_info->rx_offload_capa & RTE_ETH_RX_OFFLOAD_UDP_CKSUM) {
+      cout << "Есть поддержка RTE_ETH_RX_OFFLOAD_UDP_CKSUM" << endl;
+      port_conf[port_id].rxmode.offloads |= RTE_ETH_RX_OFFLOAD_UDP_CKSUM;
+    }
+
+    if (port_info->rx_offload_capa & RTE_ETH_RX_OFFLOAD_TCP_CKSUM) {
+      cout << "Есть поддержка RTE_ETH_RX_OFFLOAD_TCP_CKSUM" << endl;
+      port_conf[port_id].rxmode.offloads |= RTE_ETH_RX_OFFLOAD_TCP_CKSUM;
+    }
+
     // TX
-    port_conf[port_id].txmode.offloads |= RTE_ETH_TX_OFFLOAD_IPV4_CKSUM;
-    port_conf[port_id].txmode.offloads |= RTE_ETH_TX_OFFLOAD_UDP_CKSUM;
-    port_conf[port_id].txmode.offloads |= RTE_ETH_TX_OFFLOAD_TCP_CKSUM;
+    if (port_info->tx_offload_capa & RTE_ETH_TX_OFFLOAD_IPV4_CKSUM) {
+      cout << "Есть поддержка RTE_ETH_TX_OFFLOAD_IPV4_CKSUM" << endl;
+      port_conf[port_id].txmode.offloads |= RTE_ETH_TX_OFFLOAD_IPV4_CKSUM;
+    }
+
+    if (port_info->tx_offload_capa & RTE_ETH_TX_OFFLOAD_UDP_CKSUM) {
+      cout << "Есть поддержка RTE_ETH_TX_OFFLOAD_UDP_CKSUM" << endl;
+      port_conf[port_id].txmode.offloads |= RTE_ETH_TX_OFFLOAD_UDP_CKSUM;
+    }
+
+    if (port_info->tx_offload_capa & RTE_ETH_TX_OFFLOAD_TCP_CKSUM) {
+      cout << "Есть поддержка RTE_ETH_TX_OFFLOAD_TCP_CKSUM" << endl;
+      port_conf[port_id].txmode.offloads |= RTE_ETH_TX_OFFLOAD_TCP_CKSUM;
+    }
 
     if (rte_eth_dev_configure(port_id, port_info[port_id].max_rx_queues,
                               port_info[port_id].max_tx_queues,
                               &port_conf[port_id]) < 0)
-      rte_exit(rte_errno,
-               "Ошибка конфигурирования интерфейса: %s\n", rte_strerror(rte_errno));
+      rte_exit(rte_errno, "Ошибка конфигурирования интерфейса: %s\n",
+               rte_strerror(rte_errno));
 
     //  RX
     for (int rx_queue = 0; rx_queue < port_info[port_id].max_rx_queues;
@@ -198,7 +225,8 @@ int main(int argc, char* argv[]) {
     config[port_id].pool = tx_pool[port_id];
 
     if (rte_eal_remote_launch(thread, &config[port_id], 1 + port_id) != 0)
-      rte_exit(rte_errno, "Ошибка запуска потока: %s\n", rte_strerror(rte_errno));
+      rte_exit(rte_errno, "Ошибка запуска потока: %s\n",
+               rte_strerror(rte_errno));
   }
 
   while (true) {
