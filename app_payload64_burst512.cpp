@@ -108,15 +108,12 @@ int main(int argc, char* argv[]) {
       port_conf[port_id].txmode.offloads |= RTE_ETH_TX_OFFLOAD_TCP_CKSUM;
     }
 
-    if (rte_eth_dev_configure(port_id, port_info[port_id].max_rx_queues,
-                              port_info[port_id].max_tx_queues,
-                              &port_conf[port_id]) < 0)
+    if (rte_eth_dev_configure(port_id, 1, 1, &port_conf[port_id]) < 0)
       rte_exit(rte_errno, "Ошибка конфигурирования интерфейса: %s\n",
                rte_strerror(rte_errno));
 
     //  RX
-    for (int rx_queue = 0; rx_queue < 1;
-         rx_queue++) {
+    for (int rx_queue = 0; rx_queue < 1; rx_queue++) {
       int rx_queue_cr = rte_eth_rx_queue_setup(
           port_id, rx_queue, port_info[port_id].rx_desc_lim.nb_max,
           rte_eth_dev_socket_id(port_id), NULL, rx_pool[port_id]);
@@ -125,8 +122,7 @@ int main(int argc, char* argv[]) {
                  rte_strerror(rte_errno));
     }
     // TX
-    for (int tx_queue = 0; tx_queue < 1;
-         tx_queue++) {
+    for (int tx_queue = 0; tx_queue < 1; tx_queue++) {
       int tx_queue_cr = rte_eth_tx_queue_setup(
           port_id, tx_queue, port_info[port_id].tx_desc_lim.nb_max,
           rte_eth_dev_socket_id(port_id), NULL);
