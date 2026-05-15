@@ -252,8 +252,8 @@ int main(int argc, char* argv[]) {
         opackets = port_stats[port_id].opackets - opackets;
         ipackets = port_stats[port_id].ipackets - ipackets;
 
-        tx_mbps = ((PAYLOAD_SIZE + 28) * 8) * opackets / (1024 * 1024);
-        rx_mbps = ((PAYLOAD_SIZE + 28) * 8) * ipackets / (1024 * 1024);
+        tx_mbps = ((PAYLOAD_SIZE + 38 + 28) * 8) * opackets / (1024 * 1024);
+        rx_mbps = ((PAYLOAD_SIZE + 38 + 28) * 8) * ipackets / (1024 * 1024);
 
         cout << "\n==========================================" << endl;
         cout << "Port ID: " << port_id << endl;
@@ -288,8 +288,8 @@ int thread(void* arg) {
         burst[frame_id] =
             rte_pktmbuf_clone(config->mbuf[frame_id], config->pool);
 
-      uint16_t sent_frames =
-          rte_eth_tx_burst(config->port_id, config->queue_id, burst, BURST_SIZE);
+      uint16_t sent_frames = rte_eth_tx_burst(config->port_id, config->queue_id,
+                                              burst, BURST_SIZE);
 
       if (unlikely(sent_frames < BURST_SIZE))
         for (uint frame_id = sent_frames; frame_id < BURST_SIZE; frame_id++)
