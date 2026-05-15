@@ -16,6 +16,7 @@
 using namespace std;
 
 struct ThreadConfig {
+  uint8_t queue_id = 0;
   uint8_t core_id = 0;
   uint8_t port_id = 0;
   bool started = false;
@@ -219,6 +220,7 @@ int main(int argc, char* argv[]) {
   for (int port_id = 0; port_id < number_interfaces; port_id++) {
     config[port_id].core_id = port_id + 1;
     config[port_id].port_id = 0;
+    config[port_id].queue_id = port_id;
     config[port_id].mbuf = burst[port_id];
     config[port_id].pool = tx_pool[port_id];
 
@@ -287,7 +289,7 @@ int thread(void* arg) {
             rte_pktmbuf_clone(config->mbuf[frame_id], config->pool);
 
       uint16_t sent_frames =
-          rte_eth_tx_burst(config->port_id, config->core_id, burst, BURST_SIZE);
+          rte_eth_tx_burst(config->port_id, config->queue_id, burst, BURST_SIZE);
 
       if (unlikely(sent_frames < BURST_SIZE))
         for (uint frame_id = sent_frames; frame_id < BURST_SIZE; frame_id++)
