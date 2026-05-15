@@ -109,12 +109,12 @@ int main(int argc, char* argv[]) {
       port_conf[port_id].txmode.offloads |= RTE_ETH_TX_OFFLOAD_TCP_CKSUM;
     }
 
-    if (rte_eth_dev_configure(port_id, 1, 1, &port_conf[port_id]) < 0)
+    if (rte_eth_dev_configure(port_id, 4, 4, &port_conf[port_id]) < 0)
       rte_exit(rte_errno, "Ошибка конфигурирования интерфейса: %s\n",
                rte_strerror(rte_errno));
 
     //  RX
-    for (int rx_queue = 0; rx_queue < 1; rx_queue++) {
+    for (int rx_queue = 0; rx_queue < 4; rx_queue++) {
       int rx_queue_cr = rte_eth_rx_queue_setup(
           port_id, rx_queue, port_info[port_id].rx_desc_lim.nb_max,
           rte_eth_dev_socket_id(port_id), NULL, rx_pool[port_id]);
@@ -123,7 +123,7 @@ int main(int argc, char* argv[]) {
                  rte_strerror(rte_errno));
     }
     // TX
-    for (int tx_queue = 0; tx_queue < 1; tx_queue++) {
+    for (int tx_queue = 0; tx_queue < 4; tx_queue++) {
       int tx_queue_cr = rte_eth_tx_queue_setup(
           port_id, tx_queue, port_info[port_id].tx_desc_lim.nb_max,
           rte_eth_dev_socket_id(port_id), NULL);
@@ -287,7 +287,7 @@ int thread(void* arg) {
             rte_pktmbuf_clone(config->mbuf[frame_id], config->pool);
 
       uint16_t sent_frames =
-          rte_eth_tx_burst(config->port_id, 0, burst, BURST_SIZE);
+          rte_eth_tx_burst(config->port_id, config->core_id, burst, BURST_SIZE);
 
       if (unlikely(sent_frames < BURST_SIZE))
         for (uint frame_id = sent_frames; frame_id < BURST_SIZE; frame_id++)
