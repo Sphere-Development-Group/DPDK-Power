@@ -219,8 +219,8 @@ int main(int argc, char* argv[]) {
   ThreadConfig config[number_interfaces];
   for (int port_id = 0; port_id < number_interfaces; port_id++) {
     config[port_id].core_id = port_id + 1;
-    config[port_id].port_id = 0;
-    config[port_id].queue_id = port_id;
+    config[port_id].port_id = port_id;
+    config[port_id].queue_id = 0;
     config[port_id].mbuf = burst[port_id];
     config[port_id].pool = tx_pool[port_id];
 
