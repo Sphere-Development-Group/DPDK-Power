@@ -10,7 +10,7 @@
 #include <string>
 #include <vector>
 
-#define BURST_SIZE 512
+#define BURST_SIZE 64
 #define PAYLOAD_SIZE 18
 
 using namespace std;
