@@ -16,7 +16,8 @@
 using namespace std;
 
 struct ThreadConfig {
-  uint core_id = 0;
+  uint8_t core_id = 0;
+  uint8_t port_id = 0;
   bool started = false;
   rte_mbuf** mbuf = nullptr;
   rte_mempool* pool = nullptr;
@@ -63,14 +64,14 @@ int main(int argc, char* argv[]) {
     //  Пул хранения пакетов на приём
     string rx_pool_name = "rx_pool#" + to_string(port_id);
     rx_pool[port_id] = rte_pktmbuf_pool_create(
-        rx_pool_name.c_str(), port_info[port_id].rx_desc_lim.nb_max * 2, 512, 0,
+        rx_pool_name.c_str(), port_info[port_id].rx_desc_lim.nb_max, 512, 0,
         RTE_MBUF_DEFAULT_DATAROOM + RTE_PKTMBUF_HEADROOM,
         rte_eth_dev_socket_id(port_id));
 
     // Пул хранения пакетов на отправку
     string tx_pool_name = "tx_pool#" + to_string(port_id);
     tx_pool[port_id] = rte_pktmbuf_pool_create(
-        tx_pool_name.c_str(), port_info[port_id].tx_desc_lim.nb_max * 2, 512, 0,
+        tx_pool_name.c_str(), port_info[port_id].tx_desc_lim.nb_max, 512, 0,
         RTE_MBUF_DEFAULT_DATAROOM + RTE_PKTMBUF_HEADROOM,
         rte_eth_dev_socket_id(port_id));
 
@@ -216,7 +217,8 @@ int main(int argc, char* argv[]) {
 
   ThreadConfig config[number_interfaces];
   for (int port_id = 0; port_id < number_interfaces; port_id++) {
-    config[port_id].core_id = 1 + port_id;
+    config[port_id].core_id = port_id + 1;
+    config[port_id].port_id = 0;
     config[port_id].mbuf = burst[port_id];
     config[port_id].pool = tx_pool[port_id];
 
@@ -233,28 +235,23 @@ int main(int argc, char* argv[]) {
     cout << "Command: ";
     cin >> cli_command;
     if (cli_command == "stat") {
-      uint64_t opackets[number_interfaces];  // Число отправленных пакетов
-      uint64_t ipackets[number_interfaces];  // Число принятых пакетов
-
-      for (int i = 0; i < number_interfaces; i++) {
-        opackets[i] = 0;
-        ipackets[i] = 0;
-      }
-
       double tx_mbps;
       double rx_mbps;
 
+      uint64_t opackets = 0;  // Число отправленных пакетов
+      uint64_t ipackets = 0;  // Число принятых пакетов
+
       for (uint port_id = 0; port_id < number_interfaces; port_id++) {
-        for (uint surv_stat = 0; surv_stat < 2; surv_stat++) {
-          rte_eth_stats_get(port_id, &port_stats[port_id]);
-          opackets[port_id] = port_stats[port_id].opackets - opackets[port_id];
-          tx_mbps =
-              ((PAYLOAD_SIZE + 28) * 8) * opackets[port_id] / (1024 * 1024);
-          rx_mbps =
-              ((PAYLOAD_SIZE + 28) * 8) * ipackets[port_id] / (1024 * 1024);
-          ipackets[port_id] = port_stats[port_id].ipackets - ipackets[port_id];
-          rte_delay_ms(1000);
-        }
+        rte_eth_stats_get(port_id, &port_stats[port_id]);
+        opackets = port_stats[port_id].opackets;
+        ipackets = port_stats[port_id].ipackets;
+        rte_delay_ms(1000);
+        rte_eth_stats_get(port_id, &port_stats[port_id]);
+        opackets = port_stats[port_id].opackets - opackets;
+        ipackets = port_stats[port_id].ipackets - ipackets;
+
+        tx_mbps = ((PAYLOAD_SIZE + 28) * 8) * opackets / (1024 * 1024);
+        rx_mbps = ((PAYLOAD_SIZE + 28) * 8) * ipackets / (1024 * 1024);
 
         cout << "\n==========================================" << endl;
         cout << "Port ID: " << port_id << endl;
@@ -290,7 +287,7 @@ int thread(void* arg) {
             rte_pktmbuf_clone(config->mbuf[frame_id], config->pool);
 
       uint16_t sent_frames =
-          rte_eth_tx_burst(config->core_id - 1, 0, burst, BURST_SIZE);
+          rte_eth_tx_burst(config->port_id, 0, burst, BURST_SIZE);
 
       if (unlikely(sent_frames < BURST_SIZE))
         for (uint frame_id = sent_frames; frame_id < BURST_SIZE; frame_id++)
