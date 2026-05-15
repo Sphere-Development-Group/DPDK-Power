@@ -64,14 +64,14 @@ int main(int argc, char* argv[]) {
     //  Пул хранения пакетов на приём
     string rx_pool_name = "rx_pool#" + to_string(port_id);
     rx_pool[port_id] = rte_pktmbuf_pool_create(
-        rx_pool_name.c_str(), port_info[port_id].rx_desc_lim.nb_max, 512, 0,
+        rx_pool_name.c_str(), port_info[port_id].rx_desc_lim.nb_max * 2, 512, 0,
         RTE_MBUF_DEFAULT_DATAROOM + RTE_PKTMBUF_HEADROOM,
         rte_eth_dev_socket_id(port_id));
 
     // Пул хранения пакетов на отправку
     string tx_pool_name = "tx_pool#" + to_string(port_id);
     tx_pool[port_id] = rte_pktmbuf_pool_create(
-        tx_pool_name.c_str(), port_info[port_id].tx_desc_lim.nb_max, 512, 0,
+        tx_pool_name.c_str(), port_info[port_id].tx_desc_lim.nb_max * 2, 512, 0,
         RTE_MBUF_DEFAULT_DATAROOM + RTE_PKTMBUF_HEADROOM,
         rte_eth_dev_socket_id(port_id));
 
